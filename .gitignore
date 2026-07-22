@@ -1,0 +1,26 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# Sites build helpers are source files; generated output goes to dist/
+dist/
+.wrangler/
+work/
+outputs/
+*.tsbuildinfo
+
+# local env files
+.env*.local
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# system files
+.DS_Store
+Thumbs.db
