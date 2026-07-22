@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { usePersistentState } from "./usePersistentState";
 
-type Round = "childSelf" | "parentGuess" | "parentSelf" | "childGuess";
+type Round = "childSelf" | "parentSelf";
 type Category = "words" | "time" | "help" | "touch" | "gifts";
-type Screen = "quiz" | "handoff" | "childResults" | "parentResults" | "parentGestures" | "childGestures" | "finish";
+type Screen = "quiz" | "handoff" | "results" | "parentGestures" | "childGestures" | "finish";
 type Choice = { category: Category; child: string; parent: string };
 type Question = { id: string; options: [Choice, Choice] };
 type Score = { id: Category; value: number };
@@ -194,15 +194,11 @@ export default function CoupleApp() {
       return;
     }
     const answers = { ...state.answers, [state.round]: roundAnswers };
-    if (state.round === "parentGuess") {
-      setState((current) => ({ ...current, question: 0, answers, results: { ...current.results, childSelf: scoreRound(answers.childSelf) }, screen: "childResults" }));
+    if (state.round === "parentSelf") {
+      setState((current) => ({ ...current, question: 0, answers, results: { childSelf: scoreRound(answers.childSelf), parentSelf: scoreRound(answers.parentSelf) }, screen: "results" }));
       return;
     }
-    if (state.round === "childGuess") {
-      setState((current) => ({ ...current, question: 0, answers, results: { ...current.results, parentSelf: scoreRound(answers.parentSelf) }, screen: "parentResults" }));
-      return;
-    }
-    setState((current) => ({ ...current, question: 0, answers, round: nextRound(current.round), screen: "handoff" }));
+    setState((current) => ({ ...current, question: 0, answers, round: "parentSelf", screen: "handoff" }));
   }
 
   function toggle(kind: "parent" | "child", key: string) {
@@ -220,9 +216,8 @@ export default function CoupleApp() {
 
   return <Frame label={labelFor(state.screen)}>
     {state.screen === "quiz" && <PreferenceQuiz round={state.round} question={question} index={state.question} selected={state.answers[state.round]?.[question.id]} onAnswer={answer} onBack={() => state.question ? setState((current) => ({ ...current, question: current.question - 1 })) : setShowWelcome(true)} />}
-    {state.screen === "handoff" && <RoundHandoff round={state.round} onNext={() => setState((current) => ({ ...current, screen: "quiz" }))} />}
-    {state.screen === "childResults" && <PartResult title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(childScores)}.`} scores={childScores} onNext={() => setState((current) => ({ ...current, round: "parentSelf", question: 0, screen: "quiz" }))} button="עוברים להכיר את הלב של אבא או אמא" />}
-    {state.screen === "parentResults" && <PartResult title="מה גילינו על אבא או אמא" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parentScores)}.`} scores={parentScores} onNext={() => setState((current) => ({ ...current, screen: "parentGestures" }))} button="בוחרים מחוות לשבוע" />}
+    {state.screen === "handoff" && <RoundHandoff onNext={() => setState((current) => ({ ...current, screen: "quiz" }))} />}
+    {state.screen === "results" && <Results child={childScores} parent={parentScores} onNext={() => setState((current) => ({ ...current, screen: "parentGestures" }))} />}
     {state.screen === "parentGestures" && <GestureChoice who="parent" scores={childScores} ideas={parentIdeas} selected={state.parentGestures} onToggle={(key) => toggle("parent", key)} onNext={() => setState((current) => ({ ...current, screen: "childGestures" }))} />}
     {state.screen === "childGestures" && <GestureChoice who="child" scores={parentScores} ideas={childIdeas} selected={state.childGestures} onToggle={(key) => toggle("child", key)} onNext={() => setState((current) => ({ ...current, screen: "finish" }))} />}
     {state.screen === "finish" && <FinalSummary childScores={childScores} parentScores={parentScores} parentChoices={parentIdeas.filter((idea) => state.parentGestures.includes(idea.key))} childChoices={childIdeas.filter((idea) => state.childGestures.includes(idea.key))} date={state.meetingDate} onHome={() => setShowWelcome(true)} />}
@@ -242,19 +237,12 @@ function PreferenceQuiz({ round, question, index, selected, onAnswer, onBack }: 
   return <div className="screen-block quiz-single"><div><p className="eyebrow">{meta.eyebrow} · שאלה {index + 1} מתוך {questions.length}</p><div className="journey-progress"><span style={{ width: `${((index + (selected ? 1 : 0)) / questions.length) * 100}%` }} /></div></div><div className="preference-prompt"><span className="question-badge">{index + 1}</span><h2>{meta.prompt}</h2></div><div className="preference-options">{question.options.map((option, optionIndex) => <button type="button" className={selected === option.category ? "preference-card selected" : "preference-card"} key={`${question.id}-${option.category}`} onClick={() => onAnswer(option.category)}><span className="option-letter">{optionIndex ? "ב" : "א"}</span><strong>{choiceText(round, index, optionIndex, option)}</strong><small>{categories[option.category].icon}</small></button>)}</div><p className="selection-hint">שתי האפשרויות טובות. בחרו בזו שהייתה נוגעת יותר בלב.</p><button className="ghost-button" type="button" onClick={onBack}>חזרה</button></div>;
 }
 
-function RoundHandoff({ round, onNext }: { round: Round; onNext: () => void }) {
-  const copy: Record<Round, { title: string; text: string; button: string }> = {
-    childSelf: { title: "מתחילים בלב של הילד.", text: "הילד יבחר מה היה גורם לו להרגיש יותר אהוב.", button: "הילד מוכן" },
-    parentGuess: { title: "הילד סיים לענות.", text: "עכשיו ההורה ינסה לנחש מה הילד בחר. אל תגלו עדיין את התשובות.", button: "הטלפון אצל ההורה" },
-    parentSelf: { title: "עכשיו נכיר את הלב של ההורה.", text: "הורה, ענה ישירות לילד: מה גורם לך להרגיש את האהבה שלו אליך?", button: "ההורה מוכן לענות" },
-    childGuess: { title: "ההורה סיים לענות.", text: "עכשיו הילד ינסה לנחש אילו מחוות נוגעות יותר בלב של ההורה.", button: "הטלפון אצל הילד" },
-  };
-  const item = copy[round];
-  return <div className="screen-block handoff-screen"><div className="handoff-orbit" aria-hidden="true"><span>✓</span></div><p className="eyebrow">עוברים לשלב הבא</p><h1>{item.title}</h1><p className="family-lead">{item.text}</p><button className="primary-button family-primary" type="button" onClick={onNext}>{item.button}</button></div>;
+function RoundHandoff({ onNext }: { onNext: () => void }) {
+  return <div className="screen-block handoff-screen"><div className="handoff-orbit" aria-hidden="true"><span>✓</span></div><p className="eyebrow">עוברים לחלק השני</p><h1>עכשיו נכיר את הלב של אבא או אמא.</h1><p className="family-lead">העבירו את הטלפון להורה. עכשיו ההורה יבחר אילו מחוות של הילד נוגעות במיוחד בלבו.</p><button className="primary-button family-primary" type="button" onClick={onNext}>הטלפון אצל ההורה</button></div>;
 }
 
-function PartResult({ title, text, scores, onNext, button }: { title: string; text: string; scores: Score[]; onNext: () => void; button: string }) {
-  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title={title} text="עצרו לרגע ושתפו זה את זה במה שהפתיע או נגע בכם." /><DiscoveryBlock title="התוצאה שלכם" text={text} scores={scores} /><button className="primary-button family-primary" type="button" onClick={onNext}>{button}</button></div>;
+function Results({ child, parent, onNext }: { child: Score[]; parent: Score[]; onNext: () => void }) {
+  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title="שני לבבות, שתי דרכים להרגיש אהבה" text="עצרו לרגע ושתפו זה את זה במה שהפתיע או נגע בכם." /><DiscoveryBlock title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(child)}.`} scores={child} /><DiscoveryBlock title="מה גילינו על אבא או אמא" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parent)}.`} scores={parent} /><button className="primary-button family-primary" type="button" onClick={onNext}>בוחרים מחוות לשבוע</button></div>;
 }
 
 function DiscoveryBlock({ title, text, scores }: { title: string; text: string; scores: Score[] }) {
@@ -275,21 +263,17 @@ function HeaderV3({ eyebrow, title, text }: { eyebrow: string; title: string; te
 
 const roundMeta: Record<Round, { eyebrow: string; prompt: string }> = {
   childSelf: { eyebrow: "הילד בוחר", prompt: "מה היה גורם לך להרגיש יותר אהוב/ה?" },
-  parentGuess: { eyebrow: "ההורה מנחש", prompt: "מה לדעתך היה נוגע יותר בלב של הילד?" },
   parentSelf: { eyebrow: "ההורה בוחר", prompt: "מה היה גורם לך להרגיש יותר את האהבה של הילד?" },
-  childGuess: { eyebrow: "הילד מנחש", prompt: "מה לדעתך היה נוגע יותר בלב של ההורה?" },
 };
 
 function choiceText(round: Round, questionIndex: number, optionIndex: number, option: Choice) {
   if (round === "childSelf") return option.child;
-  if (round === "parentGuess") return option.parent;
   const previous = questions.slice(0, questionIndex).flatMap((question) => question.options).filter((item) => item.category === option.category).length;
   const beforeInQuestion = questions[questionIndex].options.slice(0, optionIndex).filter((item) => item.category === option.category).length;
   return parentLoveChoices[option.category][(previous + beforeInQuestion) % parentLoveChoices[option.category].length];
 }
-function nextRound(round: Round): Round { return ({ childSelf: "parentGuess", parentGuess: "parentSelf", parentSelf: "childGuess", childGuess: "childGuess" } as Record<Round, Round>)[round]; }
 function scoreRound(answers?: Record<string, Category>): Score[] { return (Object.keys(categories) as Category[]).map((id) => ({ id, value: Object.values(answers ?? {}).filter((answer) => answer === id).length })).sort((a, b) => b.value - a.value); }
 function makeIdeas(scores: Score[], source: Record<Category, string[]>, prefix: string): Idea[] { return scores.slice(0, 2).flatMap((score) => source[score.id].map((text) => ({ key: `${prefix}-${score.id}-${text}`, category: score.id, text }))); }
 function joinNames(scores: Score[]) { return scores.slice(0, 2).map((score) => categories[score.id].name).join(" ו"); }
 function formatMeetingDate(date: string) { return new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(date)); }
-function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", childResults: "מגלים", parentResults: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום" } as Record<Screen, string>)[screen]; }
+function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", results: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום" } as Record<Screen, string>)[screen]; }
