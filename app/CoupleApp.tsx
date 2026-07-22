@@ -5,11 +5,12 @@ import { usePersistentState } from "./usePersistentState";
 
 type Round = "childSelf" | "parentSelf";
 type Category = "words" | "time" | "help" | "touch" | "gifts";
-type Screen = "quiz" | "handoff" | "results" | "parentGestures" | "childGestures" | "finish";
+type Screen = "quiz" | "handoff" | "results" | "parentGestures" | "childGestures" | "finish" | "journal";
 type Choice = { category: Category; child: string; parent: string };
 type Question = { id: string; options: [Choice, Choice] };
 type Score = { id: Category; value: number };
 type Idea = { key: string; category: Category; text: string };
+type DiaryEntry = { id: string; date: string; moment: string; feeling: string };
 type Answers = Partial<Record<Round, Record<string, Category>>>;
 type State = {
   screen: Screen;
@@ -20,9 +21,10 @@ type State = {
   parentGestures: string[];
   childGestures: string[];
   meetingDate: string | null;
+  diaryEntries: DiaryEntry[];
 };
 
-const initialState: State = { screen: "quiz", round: "childSelf", question: 0, answers: {}, results: {}, parentGestures: [], childGestures: [], meetingDate: null };
+const initialState: State = { screen: "quiz", round: "childSelf", question: 0, answers: {}, results: {}, parentGestures: [], childGestures: [], meetingDate: null, diaryEntries: [] };
 const storageKey = "lasim-al-lev-family-v03";
 const categories: Record<Category, { name: string; icon: string; description: string }> = {
   words: { name: "מילים טובות", icon: "💬", description: "מילים שמראות הערכה, עידוד וגאווה." },
@@ -177,7 +179,7 @@ export default function CoupleApp() {
   const question = questions[Math.min(state.question, questions.length - 1)];
   const childScores = state.results.childSelf ?? scoreRound(state.answers.childSelf);
   const parentScores = state.results.parentSelf ?? scoreRound(state.answers.parentSelf);
-  const complete = state.screen === "finish";
+  const complete = state.screen === "finish" || state.screen === "journal";
   const hasProgress = Boolean(state.meetingDate);
   const parentIdeas = makeIdeas(childScores, parentToChildGestures, "parent");
   const childIdeas = makeIdeas(parentScores, childToParentGestures, "child");
@@ -210,6 +212,15 @@ export default function CoupleApp() {
     });
   }
 
+  function addDiaryEntry(moment: string, feeling: string) {
+    const entry: DiaryEntry = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, date: new Date().toISOString(), moment, feeling };
+    setState((current) => ({ ...current, diaryEntries: [entry, ...(current.diaryEntries ?? [])] }));
+  }
+
+  function deleteDiaryEntry(id: string) {
+    setState((current) => ({ ...current, diaryEntries: (current.diaryEntries ?? []).filter((entry) => entry.id !== id) }));
+  }
+
   if (showWelcome) {
     return <Frame label="פתיחה"><WelcomeV3 complete={complete} hasProgress={hasProgress} date={state.meetingDate} onView={() => setShowWelcome(false)} onNew={startNew} onDelete={() => setState(initialState)} /></Frame>;
   }
@@ -220,7 +231,8 @@ export default function CoupleApp() {
     {state.screen === "results" && <Results child={childScores} parent={parentScores} onNext={() => setState((current) => ({ ...current, screen: "parentGestures" }))} />}
     {state.screen === "parentGestures" && <GestureChoice who="parent" scores={childScores} ideas={parentIdeas} selected={state.parentGestures} onToggle={(key) => toggle("parent", key)} onNext={() => setState((current) => ({ ...current, screen: "childGestures" }))} />}
     {state.screen === "childGestures" && <GestureChoice who="child" scores={parentScores} ideas={childIdeas} selected={state.childGestures} onToggle={(key) => toggle("child", key)} onNext={() => setState((current) => ({ ...current, screen: "finish" }))} />}
-    {state.screen === "finish" && <FinalSummary childScores={childScores} parentScores={parentScores} parentChoices={parentIdeas.filter((idea) => state.parentGestures.includes(idea.key))} childChoices={childIdeas.filter((idea) => state.childGestures.includes(idea.key))} date={state.meetingDate} onHome={() => setShowWelcome(true)} />}
+    {state.screen === "finish" && <FinalSummary childScores={childScores} parentScores={parentScores} parentChoices={parentIdeas.filter((idea) => state.parentGestures.includes(idea.key))} childChoices={childIdeas.filter((idea) => state.childGestures.includes(idea.key))} date={state.meetingDate} onJournal={() => setState((current) => ({ ...current, screen: "journal" }))} onHome={() => setShowWelcome(true)} />}
+    {state.screen === "journal" && <HeartJournal entries={state.diaryEntries ?? []} onAdd={addDiaryEntry} onDelete={deleteDiaryEntry} onBack={() => setState((current) => ({ ...current, screen: "finish" }))} />}
   </Frame>;
 }
 
@@ -254,8 +266,25 @@ function GestureChoice({ who, scores, ideas, selected, onToggle, onNext }: { who
   return <div className="screen-block"><HeaderV3 eyebrow={isParent ? "הבחירה של ההורה" : "הבחירה של הילד"} title={isParent ? "איך אביע אהבה לילד השבוע?" : "איך אביע אהבה להורה השבוע?"} text={`בחרו עד שלוש מחוות קטנות שמתאימות ל${joinNames(scores)}.`} /><div className="gesture-list">{ideas.map((idea) => <button type="button" key={idea.key} aria-pressed={selected.includes(idea.key)} disabled={!selected.includes(idea.key) && selected.length >= 3} className={selected.includes(idea.key) ? "gesture-card selected" : "gesture-card"} onClick={() => onToggle(idea.key)}><span aria-hidden="true">{categories[idea.category].icon}</span><b>{idea.text}</b><i>{selected.includes(idea.key) ? "נבחר" : "לבחור"}</i></button>)}</div><p className="selection-count">נבחרו {selected.length} מתוך 3</p><button className="primary-button family-primary" disabled={!selected.length} type="button" onClick={onNext}>{isParent ? "עכשיו הילד בוחר" : "לסיכום המשותף"}</button></div>;
 }
 
-function FinalSummary({ childScores, parentScores, parentChoices, childChoices, date, onHome }: { childScores: Score[]; parentScores: Score[]; parentChoices: Idea[]; childChoices: Idea[]; date: string | null; onHome: () => void }) {
-  return <div className="screen-block final-summary"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><p className="eyebrow">המפגש נשמר · {date ? formatMeetingDate(date) : "היום"}</p><h1>השבוע ננסה לפתוח זה לזה את הלב</h1><p className="summary-discovery">הילד מרגיש אהוב במיוחד דרך <strong>{joinNames(childScores)}</strong>.</p><p className="summary-discovery">ההורה מרגיש את אהבת הילד במיוחד דרך <strong>{joinNames(parentScores)}</strong>.</p><Plan title="ההורה בחר" ideas={parentChoices} /><Plan title="הילד בחר" ideas={childChoices} /><blockquote>לא מספיק לאהוב. חשוב גם שהאהבה תצליח להגיע אל הלב.</blockquote><button className="primary-button family-primary" type="button" onClick={onHome}>חזרה למסך הראשי</button></div>;
+function FinalSummary({ childScores, parentScores, parentChoices, childChoices, date, onJournal, onHome }: { childScores: Score[]; parentScores: Score[]; parentChoices: Idea[]; childChoices: Idea[]; date: string | null; onJournal: () => void; onHome: () => void }) {
+  return <div className="screen-block final-summary"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><p className="eyebrow">המפגש נשמר · {date ? formatMeetingDate(date) : "היום"}</p><h1>השבוע ננסה לפתוח זה לזה את הלב</h1><p className="summary-discovery">הילד מרגיש אהוב במיוחד דרך <strong>{joinNames(childScores)}</strong>.</p><p className="summary-discovery">ההורה מרגיש את אהבת הילד במיוחד דרך <strong>{joinNames(parentScores)}</strong>.</p><Plan title="ההורה בחר" ideas={parentChoices} /><Plan title="הילד בחר" ideas={childChoices} /><blockquote>לא מספיק לאהוב. חשוב גם שהאהבה תצליח להגיע אל הלב.</blockquote><button className="primary-button family-primary" type="button" onClick={onJournal}>פותחים את יומן השבוע</button><button className="ghost-button" type="button" onClick={onHome}>חזרה למסך הראשי</button></div>;
+}
+
+function HeartJournal({ entries, onAdd, onDelete, onBack }: { entries: DiaryEntry[]; onAdd: (moment: string, feeling: string) => void; onDelete: (id: string) => void; onBack: () => void }) {
+  const [moment, setMoment] = useState("");
+  const [feeling, setFeeling] = useState("");
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanMoment = moment.trim();
+    const cleanFeeling = feeling.trim();
+    if (!cleanMoment || !cleanFeeling) return;
+    onAdd(cleanMoment, cleanFeeling);
+    setMoment("");
+    setFeeling("");
+  }
+
+  return <div className="screen-block heart-journal"><div><p className="eyebrow">יומן השבוע</p><h1>יומן הלב שלנו</h1><p className="muted">קרה השבוע רגע קטן שתרצו לזכור? כתבו מה קרה ואיך הוא גרם לכם להרגיש.</p></div><form className="journal-form" onSubmit={submit}><label><span>מה קרה?</span><textarea value={moment} onChange={(event) => setMoment(event.target.value)} placeholder="למשל: הכנת לי תה בלי שביקשתי..." rows={3} maxLength={300} /></label><label><span>איך זה גרם לי להרגיש?</span><textarea value={feeling} onChange={(event) => setFeeling(event.target.value)} placeholder="למשל: הרגשתי שחשבת עליי..." rows={2} maxLength={200} /></label><button className="primary-button family-primary" type="submit" disabled={!moment.trim() || !feeling.trim()}>לשמור ביומן</button></form><section className="journal-entries" aria-live="polite"><h2>{entries.length ? "הרגעים ששמרנו" : "היומן מחכה לרגע הראשון"}</h2>{entries.length ? entries.map((entry) => <article className="journal-entry" key={entry.id}><time dateTime={entry.date}>{formatDiaryDate(entry.date)}</time><p>{entry.moment}</p><blockquote>{entry.feeling}</blockquote><button type="button" onClick={() => onDelete(entry.id)} aria-label="מחיקת הרשומה">מחיקה</button></article>) : <p className="journal-empty">אין צורך לכתוב בכל יום. אפשר לחזור לכאן בכל פעם שקורה משהו קטן שתרצו לזכור.</p>}</section><button className="ghost-button" type="button" onClick={onBack}>חזרה לסיכום</button></div>;
 }
 
 function Plan({ title, ideas }: { title: string; ideas: Idea[] }) { return <section className="saved-plan"><h2>{title}</h2>{ideas.map((idea) => <p key={idea.key}><span aria-hidden="true">✓</span>{idea.text}</p>)}</section>; }
@@ -281,4 +310,5 @@ function scoreRound(answers?: Record<string, Category>): Score[] { return (Objec
 function makeIdeas(scores: Score[], source: Record<Category, string[]>, prefix: string): Idea[] { return scores.slice(0, 2).flatMap((score) => source[score.id].map((text) => ({ key: `${prefix}-${score.id}-${text}`, category: score.id, text }))); }
 function joinNames(scores: Score[]) { return scores.slice(0, 2).map((score) => categories[score.id].name).join(" ו"); }
 function formatMeetingDate(date: string) { return new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(date)); }
-function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", results: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום" } as Record<Screen, string>)[screen]; }
+function formatDiaryDate(date: string) { return new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(date)); }
+function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", results: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום", journal: "יומן הלב" } as Record<Screen, string>)[screen]; }
