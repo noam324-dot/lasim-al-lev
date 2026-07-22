@@ -5,7 +5,7 @@ import { usePersistentState } from "./usePersistentState";
 
 type Round = "childSelf" | "parentGuess" | "parentSelf" | "childGuess";
 type Category = "words" | "time" | "help" | "touch" | "gifts";
-type Screen = "quiz" | "handoff" | "results" | "parentGestures" | "childGestures" | "finish";
+type Screen = "quiz" | "handoff" | "childResults" | "parentResults" | "parentGestures" | "childGestures" | "finish";
 type Choice = { category: Category; child: string; parent: string };
 type Question = { id: string; options: [Choice, Choice] };
 type Score = { id: Category; value: number };
@@ -194,8 +194,12 @@ export default function CoupleApp() {
       return;
     }
     const answers = { ...state.answers, [state.round]: roundAnswers };
+    if (state.round === "parentGuess") {
+      setState((current) => ({ ...current, question: 0, answers, results: { ...current.results, childSelf: scoreRound(answers.childSelf) }, screen: "childResults" }));
+      return;
+    }
     if (state.round === "childGuess") {
-      setState((current) => ({ ...current, question: 0, answers, results: { childSelf: scoreRound(answers.childSelf), parentSelf: scoreRound(answers.parentSelf) }, screen: "results" }));
+      setState((current) => ({ ...current, question: 0, answers, results: { ...current.results, parentSelf: scoreRound(answers.parentSelf) }, screen: "parentResults" }));
       return;
     }
     setState((current) => ({ ...current, question: 0, answers, round: nextRound(current.round), screen: "handoff" }));
@@ -217,7 +221,8 @@ export default function CoupleApp() {
   return <Frame label={labelFor(state.screen)}>
     {state.screen === "quiz" && <PreferenceQuiz round={state.round} question={question} index={state.question} selected={state.answers[state.round]?.[question.id]} onAnswer={answer} onBack={() => state.question ? setState((current) => ({ ...current, question: current.question - 1 })) : setShowWelcome(true)} />}
     {state.screen === "handoff" && <RoundHandoff round={state.round} onNext={() => setState((current) => ({ ...current, screen: "quiz" }))} />}
-    {state.screen === "results" && <Discovery child={childScores} parent={parentScores} onNext={() => setState((current) => ({ ...current, screen: "parentGestures" }))} />}
+    {state.screen === "childResults" && <PartResult title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(childScores)}.`} scores={childScores} onNext={() => setState((current) => ({ ...current, round: "parentSelf", question: 0, screen: "quiz" }))} button="עוברים להכיר את הלב של אבא או אמא" />}
+    {state.screen === "parentResults" && <PartResult title="מה גילינו על אבא או אמא" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parentScores)}.`} scores={parentScores} onNext={() => setState((current) => ({ ...current, screen: "parentGestures" }))} button="בוחרים מחוות לשבוע" />}
     {state.screen === "parentGestures" && <GestureChoice who="parent" scores={childScores} ideas={parentIdeas} selected={state.parentGestures} onToggle={(key) => toggle("parent", key)} onNext={() => setState((current) => ({ ...current, screen: "childGestures" }))} />}
     {state.screen === "childGestures" && <GestureChoice who="child" scores={parentScores} ideas={childIdeas} selected={state.childGestures} onToggle={(key) => toggle("child", key)} onNext={() => setState((current) => ({ ...current, screen: "finish" }))} />}
     {state.screen === "finish" && <FinalSummary childScores={childScores} parentScores={parentScores} parentChoices={parentIdeas.filter((idea) => state.parentGestures.includes(idea.key))} childChoices={childIdeas.filter((idea) => state.childGestures.includes(idea.key))} date={state.meetingDate} onHome={() => setShowWelcome(true)} />}
@@ -248,8 +253,8 @@ function RoundHandoff({ round, onNext }: { round: Round; onNext: () => void }) {
   return <div className="screen-block handoff-screen"><div className="handoff-orbit" aria-hidden="true"><span>✓</span></div><p className="eyebrow">עוברים לשלב הבא</p><h1>{item.title}</h1><p className="family-lead">{item.text}</p><button className="primary-button family-primary" type="button" onClick={onNext}>{item.button}</button></div>;
 }
 
-function Discovery({ child, parent, onNext }: { child: Score[]; parent: Score[]; onNext: () => void }) {
-  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title="שני לבבות, שתי דרכים להרגיש אהבה" text="התוצאה היא לא סוף התהליך. היא הזמנה להקשיב ולנסות משהו קטן השבוע." /><DiscoveryBlock title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(child)}.`} scores={child} /><DiscoveryBlock title="מה גילינו על ההורה" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parent)}.`} scores={parent} /><button className="primary-button family-primary" type="button" onClick={onNext}>בוחרים מחוות לשבוע</button></div>;
+function PartResult({ title, text, scores, onNext, button }: { title: string; text: string; scores: Score[]; onNext: () => void; button: string }) {
+  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title={title} text="עצרו לרגע ושתפו זה את זה במה שהפתיע או נגע בכם." /><DiscoveryBlock title="התוצאה שלכם" text={text} scores={scores} /><button className="primary-button family-primary" type="button" onClick={onNext}>{button}</button></div>;
 }
 
 function DiscoveryBlock({ title, text, scores }: { title: string; text: string; scores: Score[] }) {
@@ -287,4 +292,4 @@ function scoreRound(answers?: Record<string, Category>): Score[] { return (Objec
 function makeIdeas(scores: Score[], source: Record<Category, string[]>, prefix: string): Idea[] { return scores.slice(0, 2).flatMap((score) => source[score.id].map((text) => ({ key: `${prefix}-${score.id}-${text}`, category: score.id, text }))); }
 function joinNames(scores: Score[]) { return scores.slice(0, 2).map((score) => categories[score.id].name).join(" ו"); }
 function formatMeetingDate(date: string) { return new Intl.DateTimeFormat("he-IL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(date)); }
-function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", results: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום" } as Record<Screen, string>)[screen]; }
+function labelFor(screen: Screen) { return ({ quiz: "בוחרים", handoff: "מעבירים", childResults: "מגלים", parentResults: "מגלים", parentGestures: "ההורה", childGestures: "הילד", finish: "סיכום" } as Record<Screen, string>)[screen]; }
