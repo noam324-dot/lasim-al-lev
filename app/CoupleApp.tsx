@@ -28,7 +28,7 @@ const categories: Record<Category, { name: string; icon: string; description: st
   words: { name: "מילים טובות", icon: "💬", description: "מילים שמראות הערכה, עידוד וגאווה." },
   time: { name: "זמן יחד", icon: "🕰️", description: "נוכחות, הקשבה ורגעים שעושים ביחד." },
   help: { name: "עזרה ומעשים", icon: "🤲", description: "דברים קטנים שמקלים ואומרים: אני איתך." },
-  touch: { name: "קרבה וחיבה", icon: "🤍", description: "חיבוק או קרבה, כשזה נעים ומתאים." },
+  touch: { name: "קרבה וחיבה", icon: "🤍", description: "חיבוק או קרבה מתוך רצון משותף." },
   gifts: { name: "מחוות קטנות", icon: "🎁", description: "הפתעה או דבר קטן שנבחר במחשבה." },
 };
 
@@ -79,8 +79,8 @@ const parentLoveChoices: Record<Category, string[]> = {
   ],
   touch: [
     "כשאתה נותן לי חיבוק כשאנחנו נפגשים", "כשאתה מתקרב אליי בזמן שאנחנו מדברים",
-    "כשאתה נותן לי כיף אחרי שמשהו הצליח לי", "כשאתה מניח יד על הכתף שלי ברגע נעים",
-    "כשאתה נותן לי חיבוק לילה טוב", "כשאתה מחזיק לי את היד בדרך, אם זה נעים לשנינו",
+    "כשאתה נותן לי כיף אחרי שמשהו הצליח לי", "כשאתה מניח יד על הכתף שלי בזמן שאנחנו מדברים",
+    "כשאתה נותן לי חיבוק לילה טוב", "כשאתה מחזיק לי את היד בדרך כששנינו רוצים",
     "כשאתה נותן לי חיבוק לפני יום עמוס", "כשאתה מתקרב אליי כדי לומר שלום",
   ],
   gifts: [
@@ -95,7 +95,7 @@ const parentToChildGestures: Record<Category, string[]> = {
   words: ["לומר לילד במה אני גאה בו", "לכתוב לו פתק קטן", "לומר תודה על משהו שעשה"],
   time: ["להקדיש זמן רק לשנינו", "לשאול באמת איך עבר היום", "לצאת יחד להליכה קצרה"],
   help: ["לעזור לו במשהו שקשה לו", "להכין איתו משהו לקראת מחר", "להקל עליו במטלה אחת"],
-  touch: ["לחבק אותו כשזה מתאים לו", "לשבת קרוב בזמן שיחה", "לסיים את היום בחיבוק אם נעים לו"],
+  touch: ["להציע לילד חיבוק", "לשבת קרוב בזמן שיחה", "לסיים את היום בחיבוק כשהילד רוצה"],
   gifts: ["להפתיע אותו במחווה קטנה", "להכין לו משהו קטן", "להביא דבר קטן שמראה שחשבתי עליו"],
 };
 
@@ -103,7 +103,7 @@ const childToParentGestures: Record<Category, string[]> = {
   words: ["לומר תודה על משהו שעשו בשבילי", "לומר להורה שאני אוהב/ת אותו", "להשאיר פתק עם מילה טובה"],
   time: ["לשאול איך עבר היום ולהקשיב באמת", "לשבת כמה דקות רק כדי להיות יחד", "להציע הליכה קצרה יחד"],
   help: ["לעזור בבית בלי שיבקשו", "להכין כוס קפה או תה", "לשאול במה אפשר לעזור היום"],
-  touch: ["לתת חיבוק אם זה מתאים", "לשבת קרוב בזמן שיחה", "להיפרד או להיפגש בחיבוק אם נעים"],
+  touch: ["להציע להורה חיבוק", "לשבת קרוב בזמן שיחה", "להיפרד או להיפגש בחיבוק כששנינו רוצים"],
   gifts: ["להכין הפתעה קטנה בעבודת יד", "להשאיר פתק קטן", "לשמור משהו טעים ולחלוק יחד"],
 };
 
@@ -269,7 +269,10 @@ const roundMeta: Record<Round, { eyebrow: string; context: string; prompt: strin
 function choiceText(round: Round, questionIndex: number, optionIndex: number, option: Choice) {
   if (round === "childSelf") return option.child
     .replace("כשאבא או אמא ", "כש")
-    .replace("שכיף להם להיות ההורים שלי", "שכיף להם להיות איתי");
+    .replace("שכיף להם להיות ההורים שלי", "שכיף להם להיות איתי")
+    .replace("אם זה נעים לי", "אם אני רוצה")
+    .replace("אם נעים לי", "אם אני רוצה")
+    .replace("אם מתאים לי", "אם אני רוצה");
   const previous = questions.slice(0, questionIndex).flatMap((question) => question.options).filter((item) => item.category === option.category).length;
   const beforeInQuestion = questions[questionIndex].options.slice(0, optionIndex).filter((item) => item.category === option.category).length;
   return parentLoveChoices[option.category][(previous + beforeInQuestion) % parentLoveChoices[option.category].length];
