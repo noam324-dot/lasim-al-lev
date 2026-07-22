@@ -100,7 +100,7 @@ const parentToChildGestures: Record<Category, string[]> = {
 };
 
 const childToParentGestures: Record<Category, string[]> = {
-  words: ["לומר תודה על משהו שעשו בשבילי", "לומר לאבא או לאמא שאני אוהב/ת אותם", "להשאיר פתק עם מילה טובה"],
+  words: ["לומר תודה על משהו שעשו בשבילי", "לומר להורה שאני אוהב/ת אותו", "להשאיר פתק עם מילה טובה"],
   time: ["לשאול איך עבר היום ולהקשיב באמת", "לשבת כמה דקות רק כדי להיות יחד", "להציע הליכה קצרה יחד"],
   help: ["לעזור בבית בלי שיבקשו", "להכין כוס קפה או תה", "לשאול במה אפשר לעזור היום"],
   touch: ["לתת חיבוק אם זה מתאים", "לשבת קרוב בזמן שיחה", "להיפרד או להיפגש בחיבוק אם נעים"],
@@ -229,7 +229,7 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function WelcomeV3({ complete, hasProgress, date, onView, onNew, onDelete }: { complete: boolean; hasProgress: boolean; date: string | null; onView: () => void; onNew: () => void; onDelete: () => void }) {
-  return <div className="screen-block pilot-welcome"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><div className="welcome-story"><h1>ברוכים הבאים ל״לשים על לב״</h1><p>כולנו אוהבים את הילדים שלנו. ורוב הילדים אוהבים מאוד את ההורים שלהם.</p><p>אבל לפעמים קורה דבר מעניין:</p><p className="story-highlight"><strong>האהבה קיימת, אבל לא תמיד היא מורגשת.</strong></p><p>יש ילדים שמרגישים אהובים במיוחד כששומעים מילים טובות. יש כאלה שמרגישים אהובים כשמקדישים להם זמן. אחרים מרגישים אהובים כשעוזרים להם, כשנמצאים קרוב אליהם או כשעושים מחווה קטנה שאומרת: ״חשבתי עליך.״</p><p>אין דרך אחת נכונה לאהוב. לכל אחד יש דרכים שנוגעות יותר בלב שלו.</p><p>במפגש הזה תגלו גם איך הילד מרגיש אהוב וגם איך ההורה מרגיש את האהבה של הילד.</p><p>המטרה אינה לבדוק מי צדק או מי טעה, אלא להכיר טוב יותר ולבחור דרכים קטנות שבהן האהבה שכבר קיימת תגיע עמוק יותר אל הלב.</p></div><div className="preference-note"><span aria-hidden="true">↔</span><p><strong>בכל שאלה תבחרו בין שתי אפשרויות טובות.</strong><br />אין תשובה נכונה. פשוט בחרו במה שהיה נוגע בכם יותר.</p></div>{complete ? <div className="resume-card"><p>{date ? `המפגש האחרון נשמר ב־${formatMeetingDate(date)}.` : "המפגש האחרון שמור במכשיר."}</p><button className="primary-button family-primary" type="button" onClick={onView}>צפה במפגש האחרון</button><button className="ghost-button" type="button" onClick={onNew}>התחל מפגש חדש</button><button className="delete-session-button" type="button" onClick={onDelete}>מחק את המפגש השמור</button></div> : hasProgress ? <div className="resume-card"><p>יש מפגש שעדיין לא הסתיים.</p><button className="primary-button family-primary" type="button" onClick={onView}>להמשיך את המפגש</button><button className="ghost-button" type="button" onClick={onNew}>להתחיל מפגש חדש</button><button className="delete-session-button" type="button" onClick={onDelete}>מחק את המפגש האחרון</button></div> : <button className="primary-button family-primary" type="button" onClick={onNew}>מתחילים יחד</button>}</div>;
+  return <div className="screen-block pilot-welcome"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><div className="welcome-story"><h1>ברוכים הבאים ל״לשים על לב״</h1><p>בין הורים לילדים יש הרבה דרכים להביע אהבה. לפעמים האהבה נמצאת במילים, לפעמים בזמן משותף ולפעמים דווקא במעשים קטנים.</p><p>אבל גם כשהאהבה קיימת, לא תמיד היא מגיעה בדרך שהלב מרגיש הכי טוב.</p><p className="story-highlight"><strong>האהבה קיימת, אבל לא תמיד היא מורגשת.</strong></p><p>יש ילדים שמרגישים אהובים במיוחד כששומעים מילים טובות. יש כאלה שמרגישים אהובים כשמקדישים להם זמן. אחרים מרגישים אהובים כשעוזרים להם, כשנמצאים קרוב אליהם או כשעושים מחווה קטנה שאומרת: ״חשבתי עליך.״</p><p>אין דרך אחת נכונה לאהוב. לכל אחד יש דרכים שנוגעות יותר בלב שלו.</p><p>במפגש הזה תגלו גם איך הילד מרגיש אהוב וגם איך ההורה מרגיש את האהבה של הילד.</p><p>המטרה אינה לבדוק מי צדק או מי טעה, אלא להכיר טוב יותר ולבחור דרכים קטנות שבהן האהבה שכבר קיימת תגיע עמוק יותר אל הלב.</p></div><div className="preference-note"><span aria-hidden="true">↔</span><p><strong>בכל שאלה תבחרו בין שתי אפשרויות טובות.</strong><br />אין תשובה נכונה. פשוט בחרו במה שהיה נוגע בכם יותר.</p></div>{complete ? <div className="resume-card"><p>{date ? `המפגש האחרון נשמר ב־${formatMeetingDate(date)}.` : "המפגש האחרון שמור במכשיר."}</p><button className="primary-button family-primary" type="button" onClick={onView}>צפה במפגש האחרון</button><button className="ghost-button" type="button" onClick={onNew}>התחל מפגש חדש</button><button className="delete-session-button" type="button" onClick={onDelete}>מחק את המפגש השמור</button></div> : hasProgress ? <div className="resume-card"><p>יש מפגש שעדיין לא הסתיים.</p><button className="primary-button family-primary" type="button" onClick={onView}>להמשיך את המפגש</button><button className="ghost-button" type="button" onClick={onNew}>להתחיל מפגש חדש</button><button className="delete-session-button" type="button" onClick={onDelete}>מחק את המפגש האחרון</button></div> : <button className="primary-button family-primary" type="button" onClick={onNew}>מתחילים יחד</button>}</div>;
 }
 
 function PreferenceQuiz({ round, question, index, selected, onAnswer, onBack }: { round: Round; question: Question; index: number; selected?: Category; onAnswer: (value: Category) => void; onBack: () => void }) {
@@ -238,11 +238,11 @@ function PreferenceQuiz({ round, question, index, selected, onAnswer, onBack }: 
 }
 
 function RoundHandoff({ onNext }: { onNext: () => void }) {
-  return <div className="screen-block handoff-screen"><div className="handoff-orbit" aria-hidden="true"><span>✓</span></div><p className="eyebrow">עוברים לחלק השני</p><h1>עכשיו נכיר את הלב של אבא או אמא.</h1><p className="family-lead">העבירו את הטלפון להורה. עכשיו ההורה יבחר אילו מחוות של הילד נוגעות במיוחד בלבו.</p><button className="primary-button family-primary" type="button" onClick={onNext}>הטלפון אצל ההורה</button></div>;
+  return <div className="screen-block handoff-screen"><div className="handoff-orbit" aria-hidden="true"><span>✓</span></div><p className="eyebrow">עוברים לחלק השני</p><h1>עכשיו נכיר את הלב של ההורה.</h1><p className="family-lead">העבירו את הטלפון להורה. עכשיו ההורה יבחר אילו מחוות של הילד נוגעות במיוחד בלבו.</p><button className="primary-button family-primary" type="button" onClick={onNext}>הטלפון אצל ההורה</button></div>;
 }
 
 function Results({ child, parent, onNext }: { child: Score[]; parent: Score[]; onNext: () => void }) {
-  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title="שני לבבות, שתי דרכים להרגיש אהבה" text="עצרו לרגע ושתפו זה את זה במה שהפתיע או נגע בכם." /><DiscoveryBlock title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(child)}.`} scores={child} /><DiscoveryBlock title="מה גילינו על אבא או אמא" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parent)}.`} scores={parent} /><button className="primary-button family-primary" type="button" onClick={onNext}>בוחרים מחוות לשבוע</button></div>;
+  return <div className="screen-block"><HeaderV3 eyebrow="גילינו יחד..." title="שני לבבות, שתי דרכים להרגיש אהבה" text="עצרו לרגע ושתפו זה את זה במה שהפתיע או נגע בכם." /><DiscoveryBlock title="מה גילינו על הילד" text={`נראה שהילד מרגיש במיוחד את האהבה דרך ${joinNames(child)}.`} scores={child} /><DiscoveryBlock title="מה גילינו על ההורה" text={`נראה שההורה מרגיש את אהבת הילד במיוחד דרך ${joinNames(parent)}.`} scores={parent} /><button className="primary-button family-primary" type="button" onClick={onNext}>בוחרים מחוות לשבוע</button></div>;
 }
 
 function DiscoveryBlock({ title, text, scores }: { title: string; text: string; scores: Score[] }) {
@@ -255,19 +255,21 @@ function GestureChoice({ who, scores, ideas, selected, onToggle, onNext }: { who
 }
 
 function FinalSummary({ childScores, parentScores, parentChoices, childChoices, date, onHome }: { childScores: Score[]; parentScores: Score[]; parentChoices: Idea[]; childChoices: Idea[]; date: string | null; onHome: () => void }) {
-  return <div className="screen-block final-summary"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><p className="eyebrow">המפגש נשמר · {date ? formatMeetingDate(date) : "היום"}</p><h1>השבוע ננסה לפתוח זה לזה את הלב</h1><p className="summary-discovery">הילד מרגיש אהוב במיוחד דרך <strong>{joinNames(childScores)}</strong>.</p><p className="summary-discovery">ההורה מרגיש את אהבת הילד במיוחד דרך <strong>{joinNames(parentScores)}</strong>.</p><Plan title="אבא / אמא בחרו" ideas={parentChoices} /><Plan title="הילד בחר" ideas={childChoices} /><blockquote>לא מספיק לאהוב. חשוב גם שהאהבה תצליח להגיע אל הלב.</blockquote><button className="primary-button family-primary" type="button" onClick={onHome}>חזרה למסך הראשי</button></div>;
+  return <div className="screen-block final-summary"><div className="family-symbol small" aria-hidden="true"><span>♡</span><i /></div><p className="eyebrow">המפגש נשמר · {date ? formatMeetingDate(date) : "היום"}</p><h1>השבוע ננסה לפתוח זה לזה את הלב</h1><p className="summary-discovery">הילד מרגיש אהוב במיוחד דרך <strong>{joinNames(childScores)}</strong>.</p><p className="summary-discovery">ההורה מרגיש את אהבת הילד במיוחד דרך <strong>{joinNames(parentScores)}</strong>.</p><Plan title="ההורה בחר" ideas={parentChoices} /><Plan title="הילד בחר" ideas={childChoices} /><blockquote>לא מספיק לאהוב. חשוב גם שהאהבה תצליח להגיע אל הלב.</blockquote><button className="primary-button family-primary" type="button" onClick={onHome}>חזרה למסך הראשי</button></div>;
 }
 
 function Plan({ title, ideas }: { title: string; ideas: Idea[] }) { return <section className="saved-plan"><h2>{title}</h2>{ideas.map((idea) => <p key={idea.key}><span aria-hidden="true">✓</span>{idea.text}</p>)}</section>; }
 function HeaderV3({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) { return <div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2><p className="muted">{text}</p></div>; }
 
 const roundMeta: Record<Round, { eyebrow: string; context: string; prompt: string }> = {
-  childSelf: { eyebrow: "הילד בוחר", context: "מה מהדברים הבאים אתה אוהב שאבא או אמא עושים בשבילך?", prompt: "איזה מהדברים הבאים משמח אותך יותר?" },
+  childSelf: { eyebrow: "הילד בוחר", context: "מה מהדברים הבאים אתה אוהב שההורה עושה בשבילך?", prompt: "איזה מהדברים הבאים משמח אותך יותר?" },
   parentSelf: { eyebrow: "ההורה בוחר", context: "מה מהדברים הבאים אתה אוהב שהילד עושה כלפיך?", prompt: "איזה מהדברים הבאים משמח אותך יותר?" },
 };
 
 function choiceText(round: Round, questionIndex: number, optionIndex: number, option: Choice) {
-  if (round === "childSelf") return option.child;
+  if (round === "childSelf") return option.child
+    .replace("כשאבא או אמא ", "כש")
+    .replace("שכיף להם להיות ההורים שלי", "שכיף להם להיות איתי");
   const previous = questions.slice(0, questionIndex).flatMap((question) => question.options).filter((item) => item.category === option.category).length;
   const beforeInQuestion = questions[questionIndex].options.slice(0, optionIndex).filter((item) => item.category === option.category).length;
   return parentLoveChoices[option.category][(previous + beforeInQuestion) % parentLoveChoices[option.category].length];
